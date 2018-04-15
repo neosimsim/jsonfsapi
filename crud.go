@@ -5,18 +5,16 @@ import (
 	"io"
 	"encoding/json"
 	"log"
-	"os"
 )
 
 // Reads the JSON from the http.ResponseWriter deserialize to an interface{}
 // and sets the property UUID to a new UUID. A given UUID, if any, will we overwritten.
 // Encode the JSON to a file afterwards.
-func CreateElements(w http.ResponseWriter, req *http.Request) {
+func CreateElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	file := genUUID()
 	log.Print("Open ", file)
-	f, err := os.Create(file)
+	f, err := repo.Writer(file)
 	defer func() {
-		f.Sync()
 		f.Close()
 	}()
 	if err != nil {
@@ -32,12 +30,22 @@ func CreateElements(w http.ResponseWriter, req *http.Request) {
 	encoder.Encode(jsonObj)
 }
 
-func ReadElements(w http.ResponseWriter, req *http.Request) {
+func StoreElement(uuid string, w io.Reader) error {
+	// find JSON with propertis.uuid == uuid
+	// if none, create new
+	return nil
+}
+
+func LoadElement(uuid string, w io.Writer) error {
+	// find JSON with propertis.uuid == uuid
+	return nil
+}
+
+func ReadElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	file := req.URL.Query().Get("uuid")
 	log.Print("Open ", file)
-	f, err := os.Open(file)
+	f, err := repo.Reader(file)
 	defer func() {
-		f.Sync()
 		f.Close()
 	}()
 	if err != nil {
@@ -46,12 +54,11 @@ func ReadElements(w http.ResponseWriter, req *http.Request) {
 	io.Copy(w, f)
 }
 
-func UpdateElements(w http.ResponseWriter, req *http.Request) {
+func UpdateElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	file := req.URL.Query().Get("uuid")
 	log.Print("Open ", file)
-	f, err := os.Create(file)
+	f, err := repo.Writer(file)
 	defer func() {
-		f.Sync()
 		f.Close()
 	}()
 	if err != nil {
@@ -60,10 +67,10 @@ func UpdateElements(w http.ResponseWriter, req *http.Request) {
 	io.Copy(f, req.Body)
 }
 
-func DeleteElements(w http.ResponseWriter, req *http.Request) {
+func DeleteElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	file := req.URL.Query().Get("uuid")
 	log.Print("Delete ", file)
-	err := os.Remove(file)
+	err := repo.Remove(file)
 	if err != nil {
 		log.Print(err)
 	}

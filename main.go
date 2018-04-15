@@ -24,15 +24,16 @@ func main() {
 }
 
 func ServeElements(w http.ResponseWriter, req *http.Request) {
+	repo := NewFileRepo()
 	switch req.Method {
 	case "GET":
-		ReadElements(w, req)
+		ReadElements(repo, w, req)
 	case "POST":
-		CreateElements(w, req)
+		CreateElements(repo, w, req)
 	case "PUT":
-		UpdateElements(w, req)
+		UpdateElements(repo, w, req)
 	case "DELETE":
-		DeleteElements(w, req)
+		DeleteElements(repo, w, req)
 	}
 }
 
