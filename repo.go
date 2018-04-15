@@ -5,12 +5,16 @@ import (
 	"os"
 )
 
+// Repo is an interface that specifies methods to obtain io.ReadCloser
+// and io.WriteCloser for elements and delete elements. Elemnts might be files
+// or cache entries, by some identifiyed, e.g. UUID.
 type Repo interface {
 	Writer(string) (io.WriteCloser, error)
 	Reader(string) (io.ReadCloser, error)
 	Remove(string) error
 }
 
+// FileRepo is a Repo to store elements to disk as files.
 type FileRepo struct{}
 
 func NewFileRepo() *FileRepo {
