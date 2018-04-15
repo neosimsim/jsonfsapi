@@ -58,7 +58,7 @@ func CreateElements(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var jsonObj interface{}
 	decoder.Decode(&jsonObj)
-	log.Print(jsonObj)
+	log.Print("Store new JSON: ", jsonObj, " whith UUID ", file)
 	jsonObj.(map[string]interface{})["uuid"] = file
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "\t")
@@ -94,6 +94,12 @@ func UpdateElements(w http.ResponseWriter, req *http.Request) {
 }
 
 func DeleteElements(w http.ResponseWriter, req *http.Request) {
+	file := req.URL.Query().Get("uuid")
+	log.Print("Delete ", file)
+	err := os.Remove(file)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func write() {
