@@ -19,21 +19,22 @@ func (u Uuided) OpenFile() (*os.File, error) {
 var cache = []Uuided{Uuided{"123"}, Uuided{"123a"}, Uuided{"123b"}}
 
 func main() {
-	http.HandleFunc("/", ServeElements)
+	http.HandleFunc("/", ServeElementsFactory(NewFileRepo()))
 	log.Fatal(http.ListenAndServe(":12345", nil))
 }
 
-func ServeElements(w http.ResponseWriter, req *http.Request) {
-	repo := NewFileRepo()
-	switch req.Method {
-	case "GET":
-		ReadElements(repo, w, req)
-	case "POST":
-		CreateElements(repo, w, req)
-	case "PUT":
-		UpdateElements(repo, w, req)
-	case "DELETE":
-		DeleteElements(repo, w, req)
+func ServeElementsFactory(repo Repo) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case "GET":
+			ReadElements(repo, w, req)
+		case "POST":
+			CreateElements(repo, w, req)
+		case "PUT":
+			UpdateElements(repo, w, req)
+		case "DELETE":
+			DeleteElements(repo, w, req)
+		}
 	}
 }
 
