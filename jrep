@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# You can pipe file found to `xargs jq -s '.'` to get results as an array.
+
+if [ $# -le 3 ]
+then
+	echo "usage: $0 <key> <value> <files...>" > /dev/stderr
+	exit 1
+fi
+
+key="$1"
+shift
+val="$1"
+shift
+
+for file in $@
+do
+	if [ `jq ".$key == \"$val\"" $file 2> /dev/null` = "true" ] 2> /dev/null
+	then
+		echo $file
+	fi
+done
