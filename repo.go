@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 )
@@ -31,4 +32,60 @@ func (*FileRepo) Reader(uuid string) (io.ReadCloser, error) {
 
 func (*FileRepo) Remove(uuid string) error {
 	return os.Remove(uuid)
+}
+
+type Cache map[string][]byte
+
+func (c *Cache) Writer(uuid string) (io.WriteCloser, error) {
+	return c.NewWriter(uuid), nil
+}
+
+func (c *Cache) Reader(uuid string) (io.ReadCloser, error) {
+	return c.NewReader(uuid), nil
+}
+
+func (c *Cache) Remove(uuid string) error {
+	delete(*c, uuid)
+	return nil
+}
+
+type CacheReader struct{
+	reader io.Reader
+}
+
+func (c *Cache) NewReader(key string) *CacheReader {
+	return &CacheReader{
+		reader: bytes.NewReader((*c)[key]),
+	}
+}
+
+func (cw *CacheReader) Read(p []byte) (int, error) {
+	return cw.reader.Read(p)
+}
+
+func (cw *CacheReader) Close() error {
+	return nil
+}
+
+type CacheWriter struct{
+	writer *bytes.Buffer;
+	cache *Cache;
+	key string;
+}
+
+func (c *Cache) NewWriter(key string) *CacheWriter {
+	return &CacheWriter{
+		writer: bytes.NewBuffer((*c)[key]),
+		cache: c,
+		key: key,
+	}
+}
+
+func (cw *CacheWriter) Write(p []byte) (int, error) {
+	return cw.writer.Write(p)
+}
+
+func (cw *CacheWriter) Close() error {
+	(*cw.cache)[cw.key] = cw.writer.Bytes()
+	return nil
 }
