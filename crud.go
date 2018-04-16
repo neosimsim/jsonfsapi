@@ -28,6 +28,8 @@ func CreateElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "\t")
 	encoder.Encode(jsonObj)
+	w.Header().Set("Location", file)
+	w.WriteHeader(http.StatusCreated)
 }
 
 func StoreElement(uuid string, w io.Reader) error {
@@ -74,4 +76,5 @@ func DeleteElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
