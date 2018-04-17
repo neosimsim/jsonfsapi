@@ -67,7 +67,7 @@ func TestRead(t *testing.T) {
 	var result []map[string]interface{}
 
 	if err := decoder.Decode(&result); err != nil {
-		t.Fatal("Response is not JSON serializable: ", err)
+		t.Fatal("Response is not JSON serializable: ", err, w.Body)
 	}
 	if result[0]["uuid"] != "deadbeef" {
 		t.Error("The UUID should not be updated.")
