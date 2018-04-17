@@ -12,7 +12,7 @@ import (
 // and sets the property UUID to a new UUID. A given UUID, if any, will we overwritten.
 // Encode the JSON to a file afterwards.
 func CreateElements(repo Repo, w http.ResponseWriter, req *http.Request) {
-	uuid := path.Base(req.URL.Path)
+	uuid := genUUID()
 	log.Print("Open ", uuid)
 	f, err := repo.Writer(uuid)
 	defer func() {
