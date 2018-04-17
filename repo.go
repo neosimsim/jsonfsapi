@@ -53,7 +53,13 @@ func (fr *FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
 	for i, file := range files {
 		fileNames[i+2] = file.Name()
 	}
-	cmd := exec.Command("./jrep", fileNames...)
+	var cmd *exec.Cmd
+	if q.Val == "" {
+		log.Print(fileNames[2:])
+		cmd = exec.Command("echo", fileNames[2:]...)
+	} else {
+		cmd = exec.Command("./jrep", fileNames...)
+	}
 	jqCmd := exec.Command("xargs", "jq", "-s", ".")
 
 	in, out := io.Pipe()
@@ -69,15 +75,6 @@ func (fr *FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
 	out.Close()
 	jqCmd.Wait()
 
-// 	out, _ := cmd.StdoutPipe()
-// 	cmd.Start()
-//
-// 	in, _ := jqCmd.StdinPipe()
-// 	result, _ := jqCmd.StdoutPipe()
-// 	jqCmd.Start()
-
-// 	io.Copy(os.Stdout, &result)
-
 	return &ReadCloserWrapper{&result}, nil
 }
 
@@ -89,7 +86,7 @@ func (r *ReadCloserWrapper) Read(p []byte) (int, error) {
 	return r.Reader.Read(p)
 }
 
-func (r *ReadCloserWrapper) Close() (error) {
+func (r *ReadCloserWrapper) Close() error {
 	return nil
 }
 
