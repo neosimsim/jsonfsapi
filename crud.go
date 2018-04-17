@@ -34,21 +34,25 @@ func CreateElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func StoreElement(uuid string, w io.Reader) error {
-	// find JSON with propertis.uuid == uuid
-	// if none, create new
-	return nil
-}
-
-func LoadElement(uuid string, w io.Writer) error {
-	// find JSON with propertis.uuid == uuid
-	return nil
+func ReadElement(repo Repo, w http.ResponseWriter, req *http.Request) {
+	uuid := path.Base(req.URL.Path)
+	log.Print("Open ", uuid)
+	f, err := repo.Reader(uuid)
+	defer func() {
+		f.Close()
+	}()
+	if err != nil {
+		log.Panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	io.Copy(w, f)
 }
 
 func ReadElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	uuid := req.URL.Query().Get("uuid")
+	query := Query{"uuid": uuid}
 	log.Print("Open ", uuid)
-	f, err := repo.Reader(uuid)
+	f, err := repo.QueryReader(query)
 	defer func() {
 		f.Close()
 	}()
