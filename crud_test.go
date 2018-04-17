@@ -12,7 +12,7 @@ func TestCreate(t *testing.T) {
 	cache := Cache{}
 
 	message := `{ "title": "I'm new" }`
-	req := httptest.NewRequest("POST", "http://localhost", strings.NewReader(message))
+	req := httptest.NewRequest("POST", "http://localhost/elements", strings.NewReader(message))
 	w := httptest.NewRecorder()
 	ServeElementsFactory(&cache)(w, req)
 
@@ -49,7 +49,7 @@ func TestCreate(t *testing.T) {
 func TestRead(t *testing.T) {
 	cache := Cache{"deadbeef": []byte(`{"uuid": "deadbeef", "title": "Get me"}`)}
 
-	req := httptest.NewRequest("GET", "http://localhost?uuid=deadbeef", nil)
+	req := httptest.NewRequest("GET", "http://localhost/elements?uuid=deadbeef", nil)
 	w := httptest.NewRecorder()
 	ServeElementsFactory(&cache)(w, req)
 
@@ -64,15 +64,15 @@ func TestRead(t *testing.T) {
 	}
 
 	decoder := json.NewDecoder(w.Body)
-	var result map[string]interface{}
+	var result []map[string]interface{}
 
 	if err := decoder.Decode(&result); err != nil {
 		t.Fatal("Response is not JSON serializable: ", err)
 	}
-	if result["uuid"] != "deadbeef" {
+	if result[0]["uuid"] != "deadbeef" {
 		t.Error("The UUID should not be updated.")
 	}
-	if result["title"] != "Get me" {
+	if result[0]["title"] != "Get me" {
 		t.Error("The content should be updated.")
 	}
 }
@@ -82,7 +82,7 @@ func TestUpdate(t *testing.T) {
 	cache := Cache{uuid: []byte(`{"uuid": "deadbeef", "title": "Update me"}`)}
 
 	message := `{"uuid": "abad1dea", "title": "Updated"}`
-	req := httptest.NewRequest("PUT", "http://localhost?uuid=deadbeef", strings.NewReader(message))
+	req := httptest.NewRequest("PUT", "http://localhost/elements/deadbeef", strings.NewReader(message))
 	w := httptest.NewRecorder()
 	ServeElementsFactory(&cache)(w, req)
 
@@ -112,7 +112,7 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	cache := Cache{"deadbeef": []byte("Hello World!")}
 
-	req := httptest.NewRequest("DELETE", "http://localhost?uuid=deadbeef", strings.NewReader("{}"))
+	req := httptest.NewRequest("DELETE", "http://localhost/elements/deadbeef", strings.NewReader("{}"))
 	w := httptest.NewRecorder()
 
 	ServeElementsFactory(&cache)(w, req)
