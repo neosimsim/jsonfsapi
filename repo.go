@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 )
 
-type Query map[string]string
+type Query struct {
+	Key, Val string
+} // Should be a map[string]string in the future to and/or queries
 
 // Repo is an interface that specifies methods to obtain io.ReadCloser
 // and io.WriteCloser for elements and delete elements. Elemnts might be files
@@ -20,10 +25,12 @@ type Repo interface {
 }
 
 // FileRepo is a Repo to store elements to disk as files.
-type FileRepo struct{}
+type FileRepo struct {
+	dir string
+}
 
-func NewFileRepo() *FileRepo {
-	return &FileRepo{}
+func NewFileRepo(dir string) *FileRepo {
+	return &FileRepo{dir}
 }
 
 func (*FileRepo) Writer(uuid string) (io.WriteCloser, error) {
@@ -34,8 +41,56 @@ func (*FileRepo) Reader(uuid string) (io.ReadCloser, error) {
 	return os.Open(uuid)
 }
 
-func (*FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
-	return nil, nil
+func (fr *FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
+	files, err := ioutil.ReadDir(fr.dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileNames := make([]string, len(files)+2)
+	fileNames[0] = q.Key
+	fileNames[1] = q.Val
+	for i, file := range files {
+		fileNames[i+2] = file.Name()
+	}
+	cmd := exec.Command("./jrep", fileNames...)
+	jqCmd := exec.Command("xargs", "jq", "-s", ".")
+
+	in, out := io.Pipe()
+	cmd.Stdout = out
+	jqCmd.Stdin = in
+
+	var result bytes.Buffer
+	jqCmd.Stdout = &result
+
+	cmd.Start()
+	jqCmd.Start()
+	cmd.Wait()
+	out.Close()
+	jqCmd.Wait()
+
+// 	out, _ := cmd.StdoutPipe()
+// 	cmd.Start()
+//
+// 	in, _ := jqCmd.StdinPipe()
+// 	result, _ := jqCmd.StdoutPipe()
+// 	jqCmd.Start()
+
+// 	io.Copy(os.Stdout, &result)
+
+	return &ReadCloserWrapper{&result}, nil
+}
+
+type ReadCloserWrapper struct {
+	Reader io.Reader
+}
+
+func (r *ReadCloserWrapper) Read(p []byte) (int, error) {
+	return r.Reader.Read(p)
+}
+
+func (r *ReadCloserWrapper) Close() (error) {
+	return nil
 }
 
 func (*FileRepo) Remove(uuid string) error {
@@ -72,7 +127,7 @@ func (c *Cache) NewReader(key string) *CacheReader {
 }
 
 func (c *Cache) NewQueryReader(q Query) *CacheReader {
-	entry := (*c)[q["uuid"]]
+	entry := (*c)[q.Val] // We simply assume the Val is an existing UUID
 	entryArray := fmt.Sprintf("[ %s ]", string(entry))
 	return &CacheReader{
 		reader: bytes.NewReader([]byte(entryArray)),

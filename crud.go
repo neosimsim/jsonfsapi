@@ -50,8 +50,9 @@ func ReadElement(repo Repo, w http.ResponseWriter, req *http.Request) {
 
 func ReadElements(repo Repo, w http.ResponseWriter, req *http.Request) {
 	uuid := req.URL.Query().Get("uuid")
-	query := Query{"uuid": uuid}
+	query := Query{"uuid", uuid}
 	log.Print("Open ", uuid)
+	log.Print("query: ", query)
 	f, err := repo.QueryReader(query)
 	defer func() {
 		f.Close()

@@ -19,8 +19,8 @@ func (u Uuided) OpenFile() (*os.File, error) {
 var cache = []Uuided{Uuided{"123"}, Uuided{"123a"}, Uuided{"123b"}}
 
 func main() {
-	http.HandleFunc("/elements", ServeElementsFactory(NewFileRepo()))
-	log.Fatal(http.ListenAndServe(":12345", nil))
+	http.HandleFunc("/elements", ServeElementsFactory(NewFileRepo(".")))
+	log.Fatal(http.ListenAndServe(":1234", nil))
 }
 
 func ServeElementsFactory(repo Repo) http.HandlerFunc {
