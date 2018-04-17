@@ -2,7 +2,7 @@
 #
 # You can pipe file found to `xargs jq -s '.'` to get results as an array.
 
-if [ $# -le 3 ]
+if [ $# -le 2 ]
 then
 	echo "usage: $0 <key> <value> <files...>" > /dev/stderr
 	exit 1
