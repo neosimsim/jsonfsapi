@@ -75,7 +75,7 @@ type CacheWriter struct{
 
 func (c *Cache) NewWriter(key string) *CacheWriter {
 	return &CacheWriter{
-		writer: bytes.NewBuffer((*c)[key]),
+		writer: bytes.NewBuffer(nil),
 		cache: c,
 		key: key,
 	}
