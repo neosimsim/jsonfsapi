@@ -20,7 +20,9 @@ var cache = []Uuided{Uuided{"123"}, Uuided{"123a"}, Uuided{"123b"}}
 
 func main() {
 	http.HandleFunc("/elements", ServeElementsFactory(NewFileRepo("elements")))
-	log.Fatal(http.ListenAndServe(":1234", nil))
+	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("assets"))))
+
+	log.Fatal(http.ListenAndServe(":12345", nil))
 }
 
 func ServeElementsFactory(repo Repo) http.HandlerFunc {
