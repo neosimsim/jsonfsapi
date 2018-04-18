@@ -30,28 +30,33 @@ type FileRepo struct {
 }
 
 func NewFileRepo(dir string) *FileRepo {
+	if dir[len(dir)-1] != '/' {
+		dir += "/"
+	}
+	os.MkdirAll(dir, os.ModeDir)
 	return &FileRepo{dir}
 }
 
-func (*FileRepo) Writer(uuid string) (io.WriteCloser, error) {
-	return os.Create(uuid)
+func (fr *FileRepo) Writer(uuid string) (io.WriteCloser, error) {
+	return os.Create(fr.dir + uuid)
 }
 
-func (*FileRepo) Reader(uuid string) (io.ReadCloser, error) {
-	return os.Open(uuid)
+func (fr *FileRepo) Reader(uuid string) (io.ReadCloser, error) {
+	return os.Open(fr.dir + uuid)
 }
 
 func (fr *FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
+	log.Print("Reading files in ", fr.dir)
 	files, err := ioutil.ReadDir(fr.dir)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	fileNames := make([]string, len(files)+2)
 	fileNames[0] = q.Key
 	fileNames[1] = q.Val
 	for i, file := range files {
-		fileNames[i+2] = file.Name()
+		fileNames[i+2] = fr.dir + file.Name()
 	}
 	var cmd *exec.Cmd
 	if q.Val == "" {
@@ -61,6 +66,14 @@ func (fr *FileRepo) QueryReader(q Query) (io.ReadCloser, error) {
 		cmd = exec.Command("./jrep", fileNames...)
 	}
 	jqCmd := exec.Command("xargs", "jq", "-s", ".")
+	// Try something like:
+	// jq "if .uuid == \"$uuid\" then . else \"\" end" elements/*  | jq -s
+	// this would cut dependency on `echo` and `xargs`.
+	// Good for Windows.
+	//
+	// Also implement Pipe(commands []string) io.Reader
+	// which pipes each command in commands to the next.
+	// each command shall be split by spaces.
 
 	in, out := io.Pipe()
 	cmd.Stdout = out
